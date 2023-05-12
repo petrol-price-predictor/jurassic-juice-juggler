@@ -15,6 +15,7 @@ With the system setup like that, we can go and create our environment
 There is a MAKE file available
 ```BASH
 make
+source .venv/bin/activate
 ```
 alternatively:
 

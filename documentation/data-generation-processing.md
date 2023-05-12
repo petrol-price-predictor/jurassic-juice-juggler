@@ -1,4 +1,4 @@
-# The Data generation processing & further processing
+# Data generation & further processing
 
 ## About the petrol station market in Germany
 ---
@@ -36,18 +36,22 @@ The remaining 26 % are smaller operators and single independent petrol stations.
 
 ## Data generation process
 --- 
+How a price is changed:
 - Corporations and smaller chains are said to **control their prices centrally** for all their stations.
 - Various journalistic articles reproduce the view that **Aral and Shell are usually the first to start a new round of prices changes**. The other operators are following them.
 - It's only for the really small operators and the independents where the station is owned by the same people who operate it. There, a decision to change the price is made only for a single petrol station.
 
+What happens afterwards
+- Station operators are obliged to report price changes to the MTS-K within a 5 minute time frame 
+
 
 ## Data processing
 ---
-- **Petrol stations which sold less than 750.000 liters in the last 12 months (all fuel types combined) do not need to report their prices to the MTS-K.**
+- Petrol stations which sold less than 750.000 liters in the last 12 months (all fuel types combined) do not need to report their prices to the MTS-K.
 
 - For most of the stations, it seems that it's the petrol station software that pushes prices changes automatically to the MTS-K
 
-- Keep in mind: we pull data provided by tankerkönig.de - not necessarily a 1:1 copy of the original MTS-K data
+- **Keep in mind**: we pull data provided by tankerkönig.de - not necessarily a 1:1 copy of the original MTS-K data
 
 
 ### Open Questions

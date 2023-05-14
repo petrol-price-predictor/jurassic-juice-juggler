@@ -28,6 +28,4 @@ def pick_random_csv(path: str, random_state=42) -> str:
         str: Path of a random csv file
     """
     random.seed(random_state)
-    files = get_files(path)
-    rnd = random.randrange(len(files))
     return random.choice(get_files(path))

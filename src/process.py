@@ -1,5 +1,6 @@
 import pandas as pd
 import datetime as dt
+from typing import Union, List
 
 def set_datetime_index(ts_df: pd.DataFrame, date='date') -> pd.DataFrame:
     """Takes a date-string column as argument, converts it to datetime format and sets it as the new index of the DataFrame.
@@ -65,3 +66,18 @@ def get_unique_timestamps(df: pd.DataFrame) -> pd.Series:
         return df.index.get_level_values(0).unique().to_series()
     else:
         raise TypeError('Index is not Datetime')
+    
+def get_unique_index(df: pd.DataFrame, ind: Union[str, int]) -> pd.Series:
+    """Returns a pd.Series of unique indices in the specified index.
+
+    Args:
+        df (pd.DataFrame): _description_
+        index (Union[str, int]): _description_
+
+    Returns:
+        pd.Series: _description_
+    """
+    return pd.Series(df.index.get_level_values(ind).unique())
+    
+def search_by_index(df: pd.DataFrame, index: Union[str, int], list_of_indices: List[str])->pd.DataFrame:
+    pass

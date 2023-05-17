@@ -55,7 +55,7 @@ What happens afterwards
 
 
 ### Open Questions
-- How to correctly interpret the `...change` columns in the `*prices.csv` - especially the `3` value? This is probably tankerkönig-specific.
+- ~~How to correctly interpret the `...change` columns in the `*prices.csv` - especially the `3` value? This is probably tankerkönig-specific.~~
 - What kind of processing / cleaning happens to the data before tankerkönig.de provides it through it's API and repo?
 
 ---

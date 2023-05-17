@@ -1,6 +1,15 @@
 # Jurassic-Juice-Juggler
 Predicting petrol prices based on live data from German petrol stations
 
+---
+
+## Overview
+- This README gives a description of the raw data files from _tankerkönig.de_.
+
+- For background information on how stations change their prices and the structure of the petrol station market in Germany, see [Data generation & further processing](data-generation-processing.md).
+
+---
+# Prices
 Fields in the CSV Header:
 
 `date,station_uuid,diesel,e5,e10,dieselchange,e5change,e10change`

@@ -17,6 +17,7 @@ def get_files(path: str, suffix='csv') -> list:
     """    
     return list(Path(path).rglob(f'*.{suffix}'))
 
+
 def pick_random_csv(path: str, random_state=42) -> str:
     """Get the path of a random csv file in the specified folder, including sub-folders.
 
@@ -30,7 +31,16 @@ def pick_random_csv(path: str, random_state=42) -> str:
     random.seed(random_state)
     return random.choice(get_files(path))
 
+
 def save_closing_prices(df, file_path, date='date'):
+    """Saves the closing prices of the day to a csv file.
+    Checks for file availability and 
+
+    Args:
+        df (_type_): _description_
+        file_path (_type_): _description_
+        date (str, optional): _description_. Defaults to 'date'.
+    """
     file_path = Path(file_path)
     
     # If the file doesn't exist, write the DataFrame to a new CSV file

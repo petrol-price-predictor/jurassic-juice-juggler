@@ -15,7 +15,7 @@ def set_datetime_index(ts_df: pd.DataFrame, date='date') -> pd.DataFrame:
     """
     if date in ts_df.columns:
         ts_df = ts_df.assign(
-            date = pd.to_datetime(ts_df[date])
+            date = pd.to_datetime(ts_df[date], utc=True)
             ) \
         .set_index(date) \
         .sort_index()
@@ -98,8 +98,8 @@ def extend_panel(df: pd.DataFrame, date='date', individual='station_uuid', names
         pd.DataFrame: MultiIndex DataFrame with one time-series.
     """
     df = set_panel_index(df, date=date, individual=individual)
-    timestamps = get_unique_timestamps(df, date)
-    stations = get_unique_index(df, individual)
+    timestamps = set(get_unique_timestamps(df, date))
+    stations = set(get_unique_index(df, individual))
     new_index = pd.MultiIndex.from_product([timestamps, stations], names=names)
     return df.reindex(new_index)
 

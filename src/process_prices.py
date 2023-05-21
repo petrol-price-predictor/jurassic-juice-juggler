@@ -3,38 +3,54 @@ import pandas as pd
 from . import process
 from .config.paths import SAMPLE_DIR
 
-def process_csv(file): #closing_prices
-
-    # if not closing_prices.empty:
-    #     # find a way to attach it before the file
-    #     pass
-        
-    prices_df_raw = pd.read_csv(file)
-    dus_stations = pd.read_csv(SAMPLE_DIR / 'stations' / 'stations_dus_plus.csv')
-
-    # Create a set of all UUIDs in the DUS subsample
-    dus_station_uuid = set(dus_stations.uuid)
+def process_data(data: pd.DataFrame, last_closing_prices: pd.DataFrame):
 
     # Drop the 'change' columns for now as they dont provide us with any insight. FUTURE FEATURE ENGINEERING
-    prices_df = prices_df_raw.drop(columns=prices_df_raw.filter(like='change').columns)
-    prices_df = prices_df[prices_df.station_uuid.isin(dus_station_uuid)]
+    data = data.drop(columns=data.filter(like='change').columns)
 
-    df = process.extend_panel(prices_df)
-    df = process.swap_sort_index(df)
+    # Stratify the panel by cross-multiplying all timestamps with all stations and set a MultiIndex
+    data = process.extend_panel(data)
+    data = process.swap_sort_index(data)
 
-    # IF FIRST ROW EMPTY, USE PRICE FROM PREVIOUS DAY 'CLOSING_PRICES.CSV'
+    # If the first row is empty, impute them with the closing prices from the previous day
+    if not last_closing_prices.empty:
+        data = impute_closing_prices(data, last_closing_prices)
 
-    df[['diesel', 'e5', 'e10']] = df.groupby(level='station')[['diesel', 'e5', 'e10']].fillna(method='ffill')
+    # ForwardFill all prices until a price-change occurs
+    data = fill_missing_prices(data)
 
-    return df
+    return data
 
-def collect_metadata(data):
-    pass
-    # function that returns a datastructure to add metadata to the metadata DataFrame
+def get_metadata(data: pd.DataFrame):
+    return pd.DataFrame([{
+        "date": data.tail(1).index.get_level_values(1)[0].date(),
+        "diesel_mean": data.diesel.mean().round(3),
+        "e5_mean": data.e5.mean().round(3),
+        "e10_mean": data.e10.mean().round(3),
+        }])
 
-def get_closing_prices(data):
-    pass
-    # function that returns the last price entry for each station that day
+
+def get_closing_prices(prices_df):
+    return prices_df.groupby(level='station').tail(1)
+
+
+def impute_closing_prices(new_prices: pd.DataFrame, closing_prices: pd.DataFrame):
+
+    opening_prices = new_prices.groupby(level='station').head(1).reset_index(level=1)
+    opening_prices = opening_prices.fillna(closing_prices.reset_index(level=1))
+
+    # set the datetime index back to where it was and update the new prices with the opening prices
+    opening_prices = opening_prices.set_index('date', append=True)
+    new_prices.update(opening_prices, overwrite = False)
+    return new_prices
+
+
+def fill_missing_prices(prices_df: pd.DataFrame, method='ffill'):
+    prices_df[['diesel', 'e5', 'e10']] = prices_df \
+        .groupby(level='station')[['diesel', 'e5', 'e10']] \
+        .fillna(method=method)
+    
+    return prices_df
 
 if __name__ == "__main__":
     pass

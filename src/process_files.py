@@ -36,8 +36,8 @@ class FileProcessor:
                         # If the processing goes somehow wrong, skip the file, raise an error and safe which file wasn't processed
                         print(f"An error occurred processing file {file}: {str(e)}")
                         self.error_files.append(file)
-                pbar.set_postfix_str(f"Current file: {file}", refresh=True)
-                pbar.update()
+                    pbar.set_postfix_str(f"Current file: {file}", refresh=True)
+                    pbar.update()
 
         
     def process_file(self, file):

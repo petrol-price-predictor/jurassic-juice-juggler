@@ -8,5 +8,5 @@ SAMPLE_DIR = ROOT_DIR / 'data' / 'sample'
 
 META_DIR = ROOT_DIR / 'data_processed' / 'meta'
 PROCESSED_DIR = ROOT_DIR / 'data_processed'
-PROCESSED_PRICES = META_DIR = ROOT_DIR / 'data_processed' / 'prices'
-PROCESSED_STATIONS = META_DIR = ROOT_DIR / 'data_processed' / 'stations'
+PROCESSED_PRICES = ROOT_DIR / 'data_processed' / 'prices'
+PROCESSED_STATIONS = ROOT_DIR / 'data_processed' / 'stations'

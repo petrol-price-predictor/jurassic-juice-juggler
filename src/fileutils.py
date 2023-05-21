@@ -32,7 +32,10 @@ def pick_random_csv(path: str, random_state=42) -> str:
     return random.choice(get_files(path))
 
 def save_without_overwrite(data, file_path):
-    if file_path.is_file():        
+    file_path = Path(file_path)
+    if not file_path.parent.exists():
+        file_path.parent.mkdir(parents=True)
+    if file_path.is_file():
         raise FileExistsError(f"The file {file_path} already exists.")
     else:
         data.to_csv(file_path, index=True)

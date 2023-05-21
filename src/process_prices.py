@@ -1,4 +1,5 @@
 import pandas as pd
+import inspect
 
 from . import process
 from .config.paths import SAMPLE_DIR
@@ -51,6 +52,10 @@ def fill_missing_prices(prices_df: pd.DataFrame, method='ffill'):
         .fillna(method=method)
     
     return prices_df
+
+def make_hourly(data: pd.DataFrame)->pd.DataFrame:
+    data = data.set_index('datetime').sort_index()
+    return data
 
 if __name__ == "__main__":
     pass

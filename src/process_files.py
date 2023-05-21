@@ -5,6 +5,8 @@ from . import fileutils
 from . import process_prices
 from . import process_stations
 
+from .config.paths import ROOT_DIR
+
 from pathlib import Path
 from tqdm import tqdm
 
@@ -12,10 +14,12 @@ class FileProcessor:
     def __init__(self, directory, target_directory, subset=None, subset_index=None):
         self.directory = Path(directory)
         self.target_directory = Path(target_directory)
-        self.subset = (subset_index, set(subset))
         self.last_processed = pd.DataFrame()
         self.metadata = pd.DataFrame()
         self.error_files = []
+
+        if subset and subset_index:
+            self.subset = (subset_index, set(subset))
 
 
     def process_directory(self):
@@ -38,6 +42,14 @@ class FileProcessor:
                         self.error_files.append(file)
                     pbar.set_postfix_str(f"Current file: {file}", refresh=True)
                     pbar.update()
+
+
+    def list_files(self):
+
+        files = list(fileutils.get_files(self.directory))
+        print(f'{self.directory.relative_to(ROOT_DIR)} contains {len(files)} files.')
+        for file in files:
+            print(file.relative_to(ROOT_DIR))
 
         
     def process_file(self, file):
@@ -96,6 +108,7 @@ class RawPriceProcessor(FileProcessor):
         self.last_closing_prices = process_prices.get_closing_prices(self.last_processed)
         self.update_closing_prices()
         self.update_metadata()
+        return self.last_processed
 
     def update_metadata(self):
         meta = process_prices.get_metadata(self.last_processed)
@@ -110,7 +123,52 @@ class RawPriceProcessor(FileProcessor):
 
         # Add most recent closing prices to the closing_prices
         self.closing_prices = pd.concat([self.closing_prices, self.last_closing_prices], axis=0)
-        # This method is currently not very necessary but can later be extended to check for duplicate data    
+        # This method is currently not very necessary but can later be extended to check for duplicate data
+
+
+
+
+class PriceProcessor(FileProcessor):
+
+    def __init__(self, directory, target_directory, method=None, method_kwargs={}, *args, **kwargs):
+        super().__init__(directory, target_directory, *args, **kwargs)
+        self.predefined_methods = {
+            'hourly': process_prices.make_hourly
+        }
+        self.set_method(method, **method_kwargs)
+
+
+    def set_method(self, method, **kwargs):
+        if method is None:
+            self.method = None
+        elif type(method) == str:
+            if method not in self.predefined_methods:
+                raise ValueError(f"{method} is not a predefined method.")
+            else:
+                self.method = self.predefined_methods[method]
+        elif callable(method):
+            self.method = method
+        else:
+            raise ValueError("Passed object is not a function or a predefined method")
+
+        self.method_kwargs = kwargs
+        
+
+    def process_data(self, data: pd.DataFrame, method=None, **kwargs):
+        if method:
+            self.set_method(method, **kwargs)
+        if self.method:
+            data = self.method(data, **self.method_kwargs)
+        else:
+            raise ValueError("The method process_data requires a method to be set, but None was given.")
+        return data
+
+    def update_metadata(self):
+        raise NotImplementedError("Subclasses must implement this method")
+
+    
+
+
     
 class StationProcessor(FileProcessor):
     def __init__(self, *args, **kwargs):

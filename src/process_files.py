@@ -18,7 +18,7 @@ class FileProcessor:
         self.metadata = pd.DataFrame()
         self.error_files = []
 
-        if subset and subset_index:
+        if not subset.empty and subset_index is not None:
             self.subset = (subset_index, set(subset))
 
 
@@ -60,7 +60,7 @@ class FileProcessor:
             data = data[data[self.subset[0]].isin(self.subset[1])]
 
         # process the DataFrame. process_data is a method on the Instance Variables
-        self.last_processed = self.process_data(data)
+        self.process_data(data)
 
         # APPEND STUFF TO self.metadata HERE
         # file_metadata = self.update_metadata(self.last_processed)
@@ -104,11 +104,13 @@ class RawPriceProcessor(FileProcessor):
     
     def process_data(self, data):
 
-        data = process_prices.process_data(data, self.last_closing_prices)
-        self.last_closing_prices = process_prices.get_closing_prices(data)
+        self.last_processed = process_prices.process_data(data, self.last_closing_prices)
+        self.last_closing_prices = process_prices.get_closing_prices(self.last_processed)
         self.update_closing_prices()
         self.update_metadata()
-        return data
+
+        # returning DataFrame so the method can also be called to directly transform a DataFrame.
+        return self.last_processed
 
     def update_metadata(self):
         meta = process_prices.get_metadata(self.last_processed)
@@ -157,10 +159,12 @@ class PriceProcessor(FileProcessor):
         if method:
             self.set_method(method, **kwargs)
         if self.method:
-            data = self.method(data, **self.method_kwargs)
+            self.last_processed = self.method(data, **self.method_kwargs)
         else:
             raise ValueError("The method process_data requires a method to be set, but None was given.")
-        return data
+        
+        # returning DataFrame so the method can also be called to directly transform a DataFrame.
+        return self.last_processed
 
     def update_metadata(self):
         raise NotImplementedError("Subclasses must implement this method")

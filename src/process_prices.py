@@ -14,6 +14,7 @@ def process_data(data: pd.DataFrame, last_closing_prices: pd.DataFrame):
     data = process.swap_sort_index(data)
 
     # If the first row is empty, impute them with the closing prices from the previous day
+    # SOMETIMES DOESNT WORK, FIX
     if not last_closing_prices.empty:
         data = impute_closing_prices(data, last_closing_prices)
 
@@ -32,13 +33,14 @@ def get_metadata(data: pd.DataFrame):
 
 
 def get_closing_prices(prices_df):
-    return prices_df.groupby(level='station').tail(1)
+    closing_prices = prices_df.groupby(level='station').tail(1).reset_index(level='date')
+    return closing_prices
 
 
 def impute_closing_prices(new_prices: pd.DataFrame, closing_prices: pd.DataFrame):
 
     opening_prices = new_prices.groupby(level='station').head(1).reset_index(level=1)
-    opening_prices = opening_prices.fillna(closing_prices.reset_index(level=1))
+    opening_prices = opening_prices.fillna(closing_prices)
 
     # set the datetime index back to where it was and update the new prices with the opening prices
     opening_prices = opening_prices.set_index('date', append=True)

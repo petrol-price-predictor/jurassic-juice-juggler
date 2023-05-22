@@ -8,18 +8,17 @@ from . import process_stations
 from .config.paths import ROOT_DIR
 
 from pathlib import Path
+import random
 from tqdm import tqdm
 
 class FileProcessor:
-    def __init__(self, directory, target_directory, subset=None, subset_index=None):
+    def __init__(self, directory, target_directory, subset=None, subset_column=None, subset_df_column=None):
         self.directory = Path(directory)
         self.target_directory = Path(target_directory)
         self.last_processed = pd.DataFrame()
         self.metadata = pd.DataFrame()
         self.error_files = []
-
-        if not subset.empty and subset_index is not None:
-            self.subset = (subset_index, set(subset))
+        self.set_subset(subset, subset_column, subset_df_column)
 
 
     def process_directory(self):
@@ -51,13 +50,52 @@ class FileProcessor:
         for file in files:
             print(file.relative_to(ROOT_DIR))
 
+
+    def get_sample(self, suffix='csv', random_state=None):
+
+        random.seed(random_state)
+        files = list(Path(self.directory).rglob(f'*.{suffix}'))
+        self.sample = pd.read_csv(random.choice(files))
+        self.sample = self.get_subset(self.sample)
+        return self.sample
+    
+    
+    def set_subset(self, subset, subset_column, subset_df_column=None):
+            
+            if subset is None:
+                self.subset = None
+
+            elif isinstance(subset, pd.DataFrame):
+                if isinstance(subset_df_column, str):
+                    self.subset = {subset_column: set(subset[subset_df_column])}
+                else:
+                    raise ValueError("DataFrame requires a column to be specified to be interpreted as pd.Series or use pd.Series as an argument")
+            
+            elif isinstance(subset, (list, set, tuple, pd.Series)):
+                if isinstance(subset_column, str):
+                    self.subset = {subset_column: set(subset)}
+                else:
+                    raise ValueError("subset_column must be specified and must be a string.")
+                
+            else:
+                raise ValueError("Subset needs to be of type list, set, tuple, pd.Series or pd.DataFrame")
+        
+        
+    def get_subset(self, data):
+        
+        if self.subset is None:
+            return data
+
+        for column, values in self.subset.items():
+            data = data[data[column].isin(values)]
+        return data
+
         
     def process_file(self, file):
 
         # read the file into a DataFrame and reduce it to the desired subset
-        data = pd.read_csv(file)
-        if self.subset:
-            data = data[data[self.subset[0]].isin(self.subset[1])]
+        data = pd.read_csv(Path(file).resolve())
+        data = self.get_subset(data)
 
         # process the DataFrame. process_data is a method on the Instance Variables
         self.process_data(data)
@@ -105,7 +143,11 @@ class RawPriceProcessor(FileProcessor):
     def process_data(self, data):
 
         self.last_processed = process_prices.process_data(data, self.last_closing_prices)
-        self.last_closing_prices = process_prices.get_closing_prices(self.last_processed)
+        new_closing_prices = process_prices.get_closing_prices(self.last_processed)
+        if self.last_closing_prices.empty:
+            self.last_closing_prices = new_closing_prices
+        else:
+            self.last_closing_prices = new_closing_prices.combine_first(self.last_closing_prices)
         self.update_closing_prices()
         self.update_metadata()
 

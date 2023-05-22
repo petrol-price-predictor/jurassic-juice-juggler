@@ -57,5 +57,10 @@ def make_hourly(data: pd.DataFrame)->pd.DataFrame:
     data = data.set_index('datetime').sort_index()
     return data
 
+def get_methods()->dict:
+    return {
+            'hourly': make_hourly
+        }
+
 if __name__ == "__main__":
     pass

@@ -60,7 +60,7 @@ class FileProcessor:
             data = data[data[self.subset[0]].isin(self.subset[1])]
 
         # process the DataFrame. process_data is a method on the Instance Variables
-        self.process_data(data)
+        self.last_processed = self.process_data(data)
 
         # APPEND STUFF TO self.metadata HERE
         # file_metadata = self.update_metadata(self.last_processed)
@@ -104,11 +104,11 @@ class RawPriceProcessor(FileProcessor):
     
     def process_data(self, data):
 
-        self.last_processed = process_prices.process_data(data, self.last_closing_prices)
-        self.last_closing_prices = process_prices.get_closing_prices(self.last_processed)
+        data = process_prices.process_data(data, self.last_closing_prices)
+        self.last_closing_prices = process_prices.get_closing_prices(data)
         self.update_closing_prices()
         self.update_metadata()
-        return self.last_processed
+        return data
 
     def update_metadata(self):
         meta = process_prices.get_metadata(self.last_processed)
@@ -131,10 +131,9 @@ class RawPriceProcessor(FileProcessor):
 class PriceProcessor(FileProcessor):
 
     def __init__(self, directory, target_directory, method=None, method_kwargs={}, *args, **kwargs):
+
         super().__init__(directory, target_directory, *args, **kwargs)
-        self.predefined_methods = {
-            'hourly': process_prices.make_hourly
-        }
+        self.predefined_methods = process_prices.get_methods()
         self.set_method(method, **method_kwargs)
 
 
@@ -152,7 +151,7 @@ class PriceProcessor(FileProcessor):
             raise ValueError("Passed object is not a function or a predefined method")
 
         self.method_kwargs = kwargs
-        
+
 
     def process_data(self, data: pd.DataFrame, method=None, **kwargs):
         if method:

@@ -236,7 +236,7 @@ if __name__ == '__main__':
     dus_stations = dus_stations_data.uuid
 
     print(PRICES_DIR)
-    processor = RawPriceProcessor(PRICES_DIR, PROCESSED_PRICES, subset=dus_stations, subset_index='station_uuid')
+    processor = RawPriceProcessor(PRICES_DIR, PROCESSED_PRICES, subset=dus_stations, subset_column='station_uuid')
     processor.process_directory()
     processor.save_metadata(META_DIR)
 

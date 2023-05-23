@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import inspect
 
 from . import process
@@ -48,11 +49,22 @@ def impute_closing_prices(new_prices: pd.DataFrame, closing_prices: pd.DataFrame
     return new_prices
 
 
-def fill_missing_prices(prices_df: pd.DataFrame, method='ffill'):
+def fill_missing_prices(prices_df: pd.DataFrame):
     prices_df[['diesel', 'e5', 'e10']] = prices_df \
         .groupby(level='station')[['diesel', 'e5', 'e10']] \
-        .fillna(method=method)
-    
+        .fillna(method='ffill') \
+        .fillna(method='bfill')
+    prices_df[['diesel', 'e5', 'e10']] = prices_df.replace(0, np.nan)
+    prices_df = prices_df.assign(
+        diesel_is_selling = prices_df['diesel'].apply(lambda x: 0 if pd.isna(x) else 1),
+        e5_is_selling = prices_df['e5'].apply(lambda x: 0 if pd.isna(x) else 1),
+        e10_is_selling = prices_df['e10'].apply(lambda x: 0 if pd.isna(x) else 1),
+    )
+    prices_df[['diesel', 'e5', 'e10']] = prices_df \
+        .groupby(level='station')[['diesel', 'e5', 'e10']] \
+        .fillna(method='ffill') \
+        .fillna(method='bfill')
+   
     return prices_df
 
 def make_hourly(data: pd.DataFrame)->pd.DataFrame:

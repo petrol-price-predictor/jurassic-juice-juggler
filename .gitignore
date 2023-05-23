@@ -162,3 +162,4 @@ cython_debug/
 # Data folders
 data/prices
 data/stations
+data_processed/prices

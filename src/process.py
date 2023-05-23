@@ -15,7 +15,7 @@ def set_datetime_index(ts_df: pd.DataFrame, date='date') -> pd.DataFrame:
     """
     if date in ts_df.columns:
         ts_df = ts_df.assign(
-            date = pd.to_datetime(ts_df[date])
+            date = pd.to_datetime(ts_df[date].str[:-3]).dt.tz_localize('Europe/Berlin', ambiguous='infer')
             ) \
         .set_index(date) \
         .sort_index()
@@ -97,11 +97,24 @@ def extend_panel(df: pd.DataFrame, date='date', individual='station_uuid', names
     Returns:
         pd.DataFrame: MultiIndex DataFrame with one time-series.
     """
+    # set panel indices and remove duplicate date/station combinations. This happens on exactly one day in 10 years
     df = set_panel_index(df, date=date, individual=individual)
-    timestamps = get_unique_timestamps(df, date)
-    stations = get_unique_index(df, individual)
-    new_index = pd.MultiIndex.from_product([timestamps, stations], names=names)
-    return df.reindex(new_index)
+    
+    try:
+        new_index = panel_index_from_product(df, date, individual, names)
+        return df.reindex(new_index)
+    
+    # df.reindex(new_index) will raise a ValueError in case of duplicated indices. To deal with this we can remove these duplicates first
+    except ValueError:
+        df = df[~df.index.duplicated(keep='last')]
+        new_index = panel_index_from_product(df, date, individual, names)
+        return df.reindex(new_index)
+
+def panel_index_from_product(df, dt_index, ind_index, names):
+    """Helper Function for extend_panel to deal with exceptions"""
+    timestamps = set(get_unique_timestamps(df, dt_index))
+    stations = set(get_unique_index(df, ind_index))
+    return pd.MultiIndex.from_product([timestamps, stations], names=names)
 
 
 def swap_sort_index(df: pd.DataFrame) -> pd.DataFrame:

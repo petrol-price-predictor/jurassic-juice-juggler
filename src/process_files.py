@@ -1,5 +1,6 @@
 import pandas as pd
 import datetime as dt
+import time
 
 from . import fileutils
 from . import process_prices
@@ -34,7 +35,6 @@ class FileProcessor:
                     try:
                     # Process and save each file
                         self.process_file(file)
-                        self.save_to_file(self.last_processed, file)
                     except Exception as e:
                         # If the processing goes somehow wrong, skip the file, raise an error and safe which file wasn't processed
                         print(f"An error occurred processing file {file}: {str(e)}")
@@ -99,6 +99,7 @@ class FileProcessor:
 
         # process the DataFrame. process_data is a method on the Instance Variables
         self.process_data(data)
+        self.save_to_file(self.last_processed, file)
 
         # APPEND STUFF TO self.metadata HERE
         # file_metadata = self.update_metadata(self.last_processed)
@@ -170,18 +171,86 @@ class RawPriceProcessor(FileProcessor):
         # This method is currently not very necessary but can later be extended to check for duplicate data
 
 
+class FileSplitter(FileProcessor):
+
+    def __init__(self, directory, target_directory, split, *args, **kwargs):
+        super().__init__(directory, target_directory, *args, **kwargs)
+        self.last_processed = {}
+        self.split = split
+
+    def save_to_file(self, data, file):
+
+        # file is required here only to create the new relative Path, but the file itself is not used
+        for key, data in data.items():
+            relative_path = file.relative_to(self.directory)
+            target = self.target_directory / key / relative_path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            data.to_csv(target)
+
+    def process_data(self, data):
+        self.last_processed = process_prices.split_panel(data, self.split)
+        return self.last_processed
+
+    def update_metadata(self):
+        raise NotImplementedError("Not implemented for this subclass")
+    
+    
+class FileMerger(FileProcessor):
+
+    def __init__(self, directory, target_directory, *args, **kwargs):
+        super().__init__(directory, target_directory, *args, **kwargs)
+        self.merged_data = pd.DataFrame()
+        self.data_list = []
+
+    def process_directory(self):
+
+        super().process_directory()
+        start_time = time.time()
+        self.merged_data = process_prices.merge_sort_index(self.data_list)
+        end_time = time.time()
+        tqdm.write(f'Merged {len(self.merged_data)} rows in {end_time - start_time} seconds.')
+
+    def process_file(self, file):
+
+        # read the file into a DataFrame and reduce it to the desired subset
+        data = pd.read_csv(Path(file).resolve())
+        data = self.get_subset(data)
+
+        # process the DataFrame. process_data is a method on the Instance Variables.
+        self.process_data(data)
+        # this subclass does not save the file immediately
+
+
+
+    def save_to_file(self, data, dir=None):
+
+        f'{self.directory.name}.csv'
+        if not dir:
+            dir = Path(self.target_directory / 'merged')
+        dir.mkdir(parents=True, exist_ok=True)
+        dir = Path(dir / f'{self.directory.name}.csv')
+        print(f"Saving merged DataFrame...")
+        start_time = time.time()
+        data.to_csv(dir, index=False)
+        end_time = time.time()
+        tqdm.write(f'File saved in {dir}. It took {end_time - start_time} seconds.')
+
+    def process_data(self, data):
+        self.data_list.append(data)
+
+    def update_metadata(self):
+        raise NotImplementedError("Not implemented for this subclass")
 
 
 class PriceProcessor(FileProcessor):
 
     def __init__(self, directory, target_directory, method=None, method_kwargs={}, *args, **kwargs):
-
         super().__init__(directory, target_directory, *args, **kwargs)
         self.predefined_methods = process_prices.get_methods()
         self.set_method(method, **method_kwargs)
 
 
-    def set_method(self, method, **kwargs):
+    def set_method(self, method, *args, **kwargs):
         if method is None:
             self.method = None
         elif type(method) == str:
@@ -194,14 +263,15 @@ class PriceProcessor(FileProcessor):
         else:
             raise ValueError("Passed object is not a function or a predefined method")
 
+        self.method_args = args
         self.method_kwargs = kwargs
 
 
-    def process_data(self, data: pd.DataFrame, method=None, **kwargs):
+    def process_data(self, data: pd.DataFrame, method=None, *args, **kwargs):
         if method:
-            self.set_method(method, **kwargs)
+            self.set_method(method, *args, **kwargs)
         if self.method:
-            self.last_processed = self.method(data, **self.method_kwargs)
+            self.last_processed = self.method(data, *self.method_args, **self.method_kwargs)
         else:
             raise ValueError("The method process_data requires a method to be set, but None was given.")
         

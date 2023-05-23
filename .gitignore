@@ -160,6 +160,16 @@ cython_debug/
 #.idea/
 
 # Data folders
-data/prices
-data/stations
-data_processed/prices
+/data/prices
+/data/stations
+/data_processed/*
+/data_processed/**
+!/data_processed/meta/
+!/data_processed/meta/**
+/resampled_prices/*
+!/resampled_prices/*/*.zip
+!/resampled_prices/**/*.zip
+
+# test notebooks
+test_notepad.ipynb
+price_features.ipynb

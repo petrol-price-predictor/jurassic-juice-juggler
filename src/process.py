@@ -13,13 +13,12 @@ def set_datetime_index(ts_df: pd.DataFrame, date='date') -> pd.DataFrame:
     Returns:
         pd.DataFrame: A sorted time-series DataFrame.
     """
+
+    # There is a bug where 
     if date in ts_df.columns:
-        ts_df = ts_df.assign(
-            date = pd.to_datetime(ts_df[date].str[:-3]).dt.tz_localize('Europe/Berlin', ambiguous='infer')
-            ) \
-        .set_index(date) \
-        .sort_index()
-            
+        ts_df[date] = pd.to_datetime(ts_df[date].apply(lambda x: x.split('+')[0])).dt.tz_localize('Europe/Berlin', ambiguous='infer')        
+        ts_df = ts_df.set_index(date).sort_index()
+    
     return ts_df
 
 def set_panel_index(ts_df: pd.DataFrame, date='date', individual='', names=[]) -> pd.DataFrame:

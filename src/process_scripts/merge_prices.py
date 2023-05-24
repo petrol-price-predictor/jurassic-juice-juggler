@@ -1,7 +1,14 @@
+"""
+File Merger Script
+------------------
+
+Script that vertically merges all files contained in /resampled_prices/, manually split by sub-folders into a single panel for the DUS subset of stations
+"""
 from src.process_files import FileMerger
 
 from pathlib import Path
 from src.config.paths import ROOT_DIR
+
 
 resample_dir = Path(ROOT_DIR / 'resampled_prices')
 

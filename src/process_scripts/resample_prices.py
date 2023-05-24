@@ -1,3 +1,13 @@
+"""
+Price Resampling Script
+------------------
+
+Script that uses the PriceProcessor class in order to resample all panel data into equidistant time bins.
+
+- Loads data from /split_prices/, separated by fuel type
+- Saves resampled data to /resampled_prices/, separated by fuel type
+- Current settings are to resample to hourly data and create average prices for the bins
+"""
 from src.process_files import PriceProcessor
 
 from pathlib import Path

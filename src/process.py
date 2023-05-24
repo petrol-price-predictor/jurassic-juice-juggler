@@ -1,3 +1,27 @@
+"""
+Process Module
+--------------
+This module contains all functions that are specific to the functions in src.price_processor but not necessarily specific to the data in this project
+
+It includes:
+
+    - set_datetime_index(): function to set a timezone specific datetime index when a shift in daylight saving time might break the standard implementation from pandas
+
+    - set_panel_index(): set a MultiIndex to a DataFrame with two specified indices. Can apply index names.
+
+    - get_unique_timestamps(): pretty much what it says
+
+    - get_unique_index(): pretty much what it says
+
+    - extend_panel(): extend a panel-like DataFrame with sparse observations into a DataFrame with observation s for each timestamp and each individual
+
+    - panel_index_from_product(): creates a MultiIndex object by cross multiplying vectors of unique timestamps and unique individuals. serves as a mask to extend a sparse panel.
+
+    - swap_sort_index(): swap index levels in hierarchy and sort by index-level=0.
+
+    - add_time_columns(): creates columns for specified datetime attributes.
+"""
+
 import pandas as pd
 import datetime as dt
 from typing import Union, List
@@ -78,12 +102,8 @@ def get_unique_index(df: pd.DataFrame, ind: Union[str, int]) -> pd.Series:
     """
     return pd.Series(df.index.get_level_values(ind).unique())
 
-    
-def search_by_index(df: pd.DataFrame, index: Union[str, int], list_of_indices: List[str]) -> pd.DataFrame:
-    pass
 
-
-def extend_panel(df: pd.DataFrame, date='date', individual='station_uuid', names=['date','station']) -> pd.DataFrame:
+def extend_panel(df: pd.DataFrame, date: str='date', individual: str='station_uuid', names: list=['date','station']) -> pd.DataFrame:
     """Calls the methods to convert the DataFrame into a panel with a date and an individual column.
     Then stratifies the DataFrame by extending all timestamps to all stations
 
@@ -109,7 +129,7 @@ def extend_panel(df: pd.DataFrame, date='date', individual='station_uuid', names
         new_index = panel_index_from_product(df, date, individual, names)
         return df.reindex(new_index)
 
-def panel_index_from_product(df, dt_index, ind_index, names):
+def panel_index_from_product(df: pd.DataFrame, dt_index, ind_index, names):
     """Helper Function for extend_panel to deal with exceptions"""
     timestamps = set(get_unique_timestamps(df, dt_index))
     stations = set(get_unique_index(df, ind_index))

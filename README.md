@@ -20,7 +20,7 @@ source .venv/bin/activate
 alternatively:
 
 ```BASH
-pyenv local 3.9.8
+pyenv local 3.10.10
 python -m venv .venv
 source .venv/bin/activate
 pip install -U pip

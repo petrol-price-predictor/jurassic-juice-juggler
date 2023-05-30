@@ -135,7 +135,7 @@ def fill_missing_prices(prices_df: pd.DataFrame)->pd.DataFrame:
         .groupby(level='station')[['diesel', 'e5', 'e10']] \
         .fillna(method='ffill') \
         .fillna(method='bfill')
-    prices_df[['diesel', 'e5', 'e10']] = prices_df.replace(0, np.nan)
+    prices_df[['diesel', 'e5', 'e10']] = prices_df[['diesel', 'e5', 'e10']].apply(lambda x: np.where(x<=0, np.nan, x))
     prices_df = prices_df.assign(
         diesel_is_selling = prices_df['diesel'].apply(lambda x: 0 if pd.isna(x) else 1),
         e5_is_selling = prices_df['e5'].apply(lambda x: 0 if pd.isna(x) else 1),

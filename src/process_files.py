@@ -47,7 +47,7 @@ class FileProcessor:
         meta_dict(): Method that contains a dictionary about what meta information is to be stored from each file in an extra metadata DataFrame
         save_metadata(). Saved the metadata stored in self.metadata after calling process_directory()
     """
-    def __init__(self, directory, target_directory, subset=None, subset_column=None, subset_df_column=None):
+    def __init__(self, directory, target_directory, subset=None, subset_column=None, subset_df_column=None, save_files=True):
         """On instantiation only stores information about the source directory files and, if already specified, the data subset.
 
         Args:
@@ -62,6 +62,7 @@ class FileProcessor:
         self.last_processed = pd.DataFrame()
         self.metadata = pd.DataFrame()
         self.error_files = []
+        self.save = save_files
         self.set_subset(subset, subset_column, subset_df_column)
 
 
@@ -170,7 +171,10 @@ class FileProcessor:
 
         # process the DataFrame. process_data is a method on the Instance Variables
         self.process_data(data)
-        self.save_to_file(self.last_processed, file)
+
+        # save the files
+        if self.save:
+            self.save_to_file(self.last_processed, file)
 
         # APPEND STUFF TO self.metadata HERE
         # file_metadata = self.update_metadata(self.last_processed)

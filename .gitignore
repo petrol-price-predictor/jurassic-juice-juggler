@@ -161,6 +161,7 @@ cython_debug/
 
 # Data folders
 /data/prices
+/data/prices_parquet
 /data/stations
 /data_processed/*
 /data_processed/**

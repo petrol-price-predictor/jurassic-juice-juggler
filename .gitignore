@@ -164,6 +164,8 @@ cython_debug/
 /data/stations
 /data_processed/*
 /data_processed/**
+/data/prices_parquet/**
+/lightning_logs/**
 !/data_processed/meta/
 !/data_processed/meta/**
 resampled_prices/*.csv
@@ -172,3 +174,7 @@ resampled_prices/**/*.csv
 # test notebooks
 test_notepad.ipynb
 price_features.ipynb
+
+# docker
+Dockerfile
+dockertest.py

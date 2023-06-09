@@ -135,7 +135,7 @@ def fill_missing_prices(prices_df: pd.DataFrame)->pd.DataFrame:
         .groupby(level='station')[['diesel', 'e5', 'e10']] \
         .fillna(method='ffill') \
         .fillna(method='bfill')
-    prices_df[['diesel', 'e5', 'e10']] = prices_df.replace(0, np.nan)
+    prices_df[['diesel', 'e5', 'e10']] = prices_df[['diesel', 'e5', 'e10']].apply(lambda x: np.where(x<=0, np.nan, x))
     prices_df = prices_df.assign(
         diesel_is_selling = prices_df['diesel'].apply(lambda x: 0 if pd.isna(x) else 1),
         e5_is_selling = prices_df['e5'].apply(lambda x: 0 if pd.isna(x) else 1),
@@ -165,7 +165,7 @@ def get_methods()->dict:
         }
 
 
-def resample_timestamps(prices_df: pd.DataFrame, agg_dict: dict, freq: str = 'H')->pd.DataFrame:
+def resample_timestamps(prices_df: pd.DataFrame, agg_dict: dict,  date='date', individual='station', freq: str = 'H')->pd.DataFrame:
     """Function that will transform a panel-like DataFrame with irregular timestamps into equidistant timestamps of desired time-bins.
        Time-bins will have average prices over the interval.
 
@@ -179,25 +179,25 @@ def resample_timestamps(prices_df: pd.DataFrame, agg_dict: dict, freq: str = 'H'
     """
     
     # need to call this function first otherwise pd.to_datetime will bug without raising and error but can't transform days with shift in daylight saving time
-    prices_df = process.set_panel_index(prices_df, date='date', individual='station')
+    prices_df = process.set_panel_index(prices_df, date=date, individual=individual)
 
     #extracting the minute information before removing it from the DateTime index
-    prices_df['total_changes'] = prices_df.index.get_level_values('date').minute
+    prices_df['total_changes'] = prices_df.index.get_level_values(date).minute
 
     # unfortunately MultiIndex DFs dont allow for direct transformation, so an ugly workaround is required to floor the DateTime index
-    prices_df = prices_df.reset_index(level='date')
-    prices_df['date'] = prices_df['date'].dt.floor(freq)
-    prices_df = prices_df.set_index('date', append=True).sort_index()
+    prices_df = prices_df.reset_index(level=date)
+    prices_df[date] = prices_df[date].dt.floor(freq)
+    prices_df = prices_df.set_index(date, append=True).sort_index()
 
     # grouping by station and freq-bins, using specified aggregation for all columns. groupby is agnostic to DataTypes so not all aggregations work on every DataType
-    prices_df = prices_df.groupby(['station','date']).agg(agg_dict)
+    prices_df = prices_df.groupby([individual,date]).agg(agg_dict)
 
     # creating a new index-object that serves as a mask for the resampled DataFrame with equidistant timestamps
-    stations = prices_df.index.get_level_values('station').unique()
-    min_date = prices_df.index.get_level_values('date').min().floor('D')
-    max_date = prices_df.index.get_level_values('date').max().ceil('D') - pd.Timedelta(1, unit='us')
+    stations = prices_df.index.get_level_values(individual).unique()
+    min_date = prices_df.index.get_level_values(date).min().floor('D')
+    max_date = prices_df.index.get_level_values(date).max().ceil('D') - pd.Timedelta(1, unit='us')
     date_range = pd.date_range(min_date, max_date, freq=freq)
-    resampled_index = pd.MultiIndex.from_product([stations, date_range], names=['station', 'date'])
+    resampled_index = pd.MultiIndex.from_product([stations, date_range], names=[individual, date])
 
     # applying the resampled index to the original DataFrame and filling the NaNs.
     prices_df = prices_df.reindex(resampled_index).ffill().bfill()

@@ -178,3 +178,6 @@ price_features.ipynb
 # docker
 Dockerfile
 dockertest.py
+resampled_prices/.DS_Store
+.DS_Store
+resampled_prices/merged.zip

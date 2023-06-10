@@ -38,12 +38,33 @@ def set_datetime_index(ts_df: pd.DataFrame, date='date') -> pd.DataFrame:
         pd.DataFrame: A sorted time-series DataFrame.
     """
 
-    # There is a bug where 
     if date in ts_df.columns:
-        ts_df[date] = pd.to_datetime(ts_df[date].apply(lambda x: x.split('+')[0])).dt.tz_localize('Europe/Berlin', ambiguous='infer')        
+        ts_df[date] = set_datetime_fixed(ts_df[date])        
         ts_df = ts_df.set_index(date).sort_index()
-    
     return ts_df
+
+def set_datetime_fixed(ts_series: pd.Series) -> pd.Series:
+    """Takes a date-string column or pd.Series as argument, and converts it to datetime format specific for this projects format.
+    Applies Europe/Berlin localization after stripping it of the localization to avoid computational complexity.
+
+
+    Args:
+        ts_series (pd.Series): A time-series pd.Series that isn't already in time-series format
+
+    Returns:
+        pd.Series: in DateTime format
+    """
+
+    # Split the string at '+' and take the first part
+    ts_series = ts_series.apply(lambda x: x.split('+')[0])
+    
+    # Convert the series to datetime
+    ts_series = pd.to_datetime(ts_series)
+    
+    # Localize the time to 'Europe/Berlin' with ambiguous times inferred
+    ts_series = ts_series.dt.tz_localize('Europe/Berlin', ambiguous='infer')
+
+    return ts_series
 
 def set_panel_index(ts_df: pd.DataFrame, date='date', individual='', names=[]) -> pd.DataFrame:
     """Takes a date-string column and an individual-column as argument and convert the DataFrame in a multi-index panel DataFrame

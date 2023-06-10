@@ -43,6 +43,7 @@ def set_datetime_index(ts_df: pd.DataFrame, date='date') -> pd.DataFrame:
         ts_df = ts_df.set_index(date).sort_index()
     return ts_df
 
+
 def set_datetime_fixed(ts_series: pd.Series) -> pd.Series:
     """Takes a date-string column or pd.Series as argument, and converts it to datetime format specific for this projects format.
     Applies Europe/Berlin localization after stripping it of the localization to avoid computational complexity.
@@ -54,17 +55,21 @@ def set_datetime_fixed(ts_series: pd.Series) -> pd.Series:
     Returns:
         pd.Series: in DateTime format
     """
-
-    # Split the string at '+' and take the first part
-    ts_series = ts_series.apply(lambda x: x.split('+')[0])
-    
-    # Convert the series to datetime
-    ts_series = pd.to_datetime(ts_series)
-    
-    # Localize the time to 'Europe/Berlin' with ambiguous times inferred
-    ts_series = ts_series.dt.tz_localize('Europe/Berlin', ambiguous='infer')
-
+    # Test whether the Series is already in datetime format
+    if not (
+        issubclass(ts_series.dtype.type, pd.core.dtypes.dtypes.DatetimeTZDtype) 
+        or issubclass(ts_series.dtype.type, pd._libs.tslibs.timestamps.Timestamp)
+    ):
+        # Split the string at '+' and take the first part
+        ts_series = ts_series.apply(lambda x: x.split('+')[0])
+        
+        # Convert the series to datetime
+        ts_series = pd.to_datetime(ts_series)
+        
+        # Localize the time to 'Europe/Berlin' with ambiguous times inferred
+        ts_series = ts_series.dt.tz_localize('Europe/Berlin', ambiguous='infer')
     return ts_series
+
 
 def set_panel_index(ts_df: pd.DataFrame, date='date', individual='', names=[]) -> pd.DataFrame:
     """Takes a date-string column and an individual-column as argument and convert the DataFrame in a multi-index panel DataFrame

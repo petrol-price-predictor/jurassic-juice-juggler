@@ -21,3 +21,4 @@ openrouteservice==2.3.3
 holidays==0.21.13
 tqdm==4.65.0
 requests==2.31.0
+geopy==2.3.0

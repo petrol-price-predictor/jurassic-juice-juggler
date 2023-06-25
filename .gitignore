@@ -181,3 +181,4 @@ dockertest.py
 resampled_prices/.DS_Store
 .DS_Store
 resampled_prices/merged.zip
+shell_hilden.csv
